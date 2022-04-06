@@ -121,8 +121,8 @@ if __name__ == "__main__":
         older = random_kid()
         if older == "girl":
             older_girl += 1
-        if older == "girl" and younger == "girl":
-            both_girls += 1
+            if younger == "girl":
+                both_girls += 1
         if older == "girl" or younger == "girl":
             either_girl += 1
 
