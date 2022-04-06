@@ -145,10 +145,7 @@ def parse_row(input_row, parsers):
 def try_parse_field(field_name, value, parser_dict):
     """try to parse value using the appropriate function from parser_dict"""
     parser = parser_dict.get(field_name) # None if no such entry
-    if parser is not None:
-        return try_or_none(parser)(value)
-    else:
-        return value
+    return try_or_none(parser)(value) if parser is not None else value
 
 
 def parse_dict(input_dict, parser_dict):

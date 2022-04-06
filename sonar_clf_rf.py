@@ -5,14 +5,10 @@ from random import randrange, seed
 
 def load_csv(filename):
     """This method loads a csv file"""
-    dataset = list()
+    dataset = []
     with open(filename, 'r') as file:
         csv_reader = reader(file)
-        for row in csv_reader:
-            if not row:
-                continue
-            dataset.append(row)
-
+        dataset.extend(row for row in csv_reader if row)
     return dataset
 
 
@@ -26,10 +22,7 @@ def str_columm_to_int(dataset, column):
     """This method converts a string column to int"""
     class_values = [row[column] for row in dataset]
     unique = set(class_values)
-    lookup = dict()
-
-    for i, value in enumerate(unique):
-        lookup[value] = i
+    lookup = {value: i for i, value in enumerate(unique)}
 
     for row in dataset:
         row[column] = lookup[row[column]]
@@ -39,12 +32,12 @@ def str_columm_to_int(dataset, column):
 
 def cross_validation_split(dataset, k_folds):
     """This method splits a dataset into k folds"""
-    dataset_split = list()
+    dataset_split = []
     dataset_copy = list(dataset)
     fold_size = int(len(dataset) / k_folds)
 
-    for i in range(k_folds):
-        fold = list()
+    for _ in range(k_folds):
+        fold = []
         while(len(fold) < fold_size):
             index = randrange(len(dataset_copy))
             fold.append(dataset_copy.pop(index))
@@ -55,25 +48,21 @@ def cross_validation_split(dataset, k_folds):
 
 def accuracy_score(actual, predicted):
     """This method predicts the accuracy percentage"""
-    correct = 0
-    for i in range(len(actual)):
-        if actual[i] == predicted[i]:
-            correct += 1
-
+    correct = sum(actual[i] == predicted[i] for i in range(len(actual)))
     return correct / float(len(actual)) * 100.0
 
 
 def evaluate_algorithm(dataset, algorithm, k_folds, *args):
     """This method evaluates the algorithm using a cross validation split"""
     folds = cross_validation_split(dataset, k_folds)
-    scores = list()
+    scores = []
 
     for fold in folds:
         train_set = list(folds)
         train_set.remove(fold)
         train_set = sum(train_set, [])
 
-        test_set = list()
+        test_set = []
 
         for row in fold:
             row_copy = list(row)
@@ -105,7 +94,7 @@ def test_split(index, value, dataset):
 def gini_index(groups, classes):
     """This method calculates the gini index for a split dataset"""
     # count all samples at split point
-    n_instances = float(sum([len(group) for group in groups]))
+    n_instances = float(sum(len(group) for group in groups))
     # sum weighted gini index for each group
     gini = 0.0
     for group in groups:
@@ -126,9 +115,9 @@ def gini_index(groups, classes):
 
 def get_split(dataset, n_features):
     """This method selects the best split for the dataset"""
-    class_values = list(set(row[-1] for row in dataset))
+    class_values = list({row[-1] for row in dataset})
     b_index, b_value, b_score, b_groups = 999, 999, 999, None
-    features = list()
+    features = []
 
     while len(features) < n_features :
         index = randrange(len(dataset[0]) - 1)
@@ -189,21 +178,22 @@ def build_tree(train, max_depth, min_size, n_features):
 
 def predict(node, row):
     """This method makes a prediction with a decision tree"""
-    if row[node['index']] < node['value']:
-        if isinstance(node['left'], dict):
-            return predict(node['left'], row)
-        else:
-            return node['left']
+    if row[node['index']] >= node['value']:
+        return (
+            predict(node['right'], row)
+            if isinstance(node['right'], dict)
+            else node['right']
+        )
+
+    if isinstance(node['left'], dict):
+        return predict(node['left'], row)
     else:
-        if isinstance(node['right'], dict):
-            return predict(node['right'], row)
-        else:
-            return node['right']
+        return node['left']
 
 
 def subsample(dataset, ratio):
     """This method creates a random subsample from the dataset with replacement"""
-    sample = list()
+    sample = []
     n_sample = round(len(dataset) * ratio)
     while len(sample) < n_sample:
         index = randrange(len(dataset))
@@ -219,22 +209,22 @@ def bagging_predict(trees, row):
 
 def random_forest(train, test, max_depth, min_size, sample_size, n_trees, n_features):
     """Random Forest Algorithm"""
-    trees = list()
-    for i in range(n_trees):
+    trees = []
+    for _ in range(n_trees):
         sample = subsample(train, sample_size)
         tree = build_tree(sample, max_depth, min_size, n_features)
         trees.append(tree)
-    predictions = [bagging_predict(trees, row) for row in test]
-    return predictions
+    return [bagging_predict(trees, row) for row in test]
 
 
 """Test run the algorithm"""
+
 seed(2)
 # load and prepare the data
 filename = "/home/amogh/PycharmProjects/deeplearning/indie_projects/sonar_data.csv"
 dataset = load_csv(filename)
 # convert string attributes to integers
-for i in range(0, len(dataset[0]) - 1):
+for i in range(len(dataset[0]) - 1):
     str_column_to_float(dataset, i)
 # convert class columns to integers
 str_columm_to_int(dataset, len(dataset[0]) - 1)

@@ -13,8 +13,7 @@ labels = ['y']
 
 
 def load_data(filepath):
-    data = pd.read_csv(filepath)
-    return data
+    return pd.read_csv(filepath)
 
 
 def describe_data(data, name):

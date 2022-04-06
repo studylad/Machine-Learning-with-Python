@@ -32,9 +32,7 @@ class KMeans:
 
             # and compute the new means based on the new assignments
             for i in range(self.k):
-                i_points = [p for p, a in zip(inputs, assignments) if a == i]
-
-                if i_points:
+                if i_points := [p for p, a in zip(inputs, assignments) if a == i]:
                     self.means[i] = vector_mean(i_points)
 
 
@@ -104,26 +102,28 @@ def cluster_distance(cluster1, cluster2, distance_agg=min):
 
 
 def get_merge_order(cluster):
-    if is_leaf(cluster):
-        return float('inf')
-    else:
-        return cluster[0]
+    return float('inf') if is_leaf(cluster) else cluster[0]
 
 
 def bottom_up_cluster(inputs, distance_agg=min):
     # start with every input leaf cluster
-    clusters = [input for input in inputs]
+    clusters = list(inputs)
 
     # as long as we have more than one cluster left...
     while len(clusters) > 1:
         # find the two closest clusters
-        c1, c2 = min([(cluster1, cluster2)
-                      for i, cluster1 in enumerate(clusters)
-                      for cluster2 in clusters[:i]],
-                     key=lambda p: cluster_distance(p[0], p[1], distance_agg))
+        c1, c2 = min(
+            (
+                (cluster1, cluster2)
+                for i, cluster1 in enumerate(clusters)
+                for cluster2 in clusters[:i]
+            ),
+            key=lambda p: cluster_distance(p[0], p[1], distance_agg),
+        )
+
 
         # remove them from the list of clusters
-        clusters = [c for c in clusters if c != c1 and c != c2]
+        clusters = [c for c in clusters if c not in [c1, c2]]
 
         # merge them, using merge _order = # of cluster left
         merged_cluster = (len(clusters), [c1, c2])
